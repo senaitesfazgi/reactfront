@@ -1,0 +1,60 @@
+pipeline {
+  agent any
+  environment {
+    COURSE = 'Calgary DevOps'
+    BRANCH = 'main'
+    WWWROOT = '/var/www'
+    SSHUSER = 'jenkins'
+    SSHKEY = '/var/lib/jenkins/.ssh/first-key.pem'
+    WEBSERVER = 'ec2web02'
+  }
+  stages {
+    stage('Audit Tools') {
+      steps {
+        echo "Audit all tools to be use on this pipeline ${BRANCH}"
+        sh "git --version"
+        sh "node --version"
+        sh "npm --version"
+        sh "npm view react version"
+        sh "ansible --version"
+        echo "Workspace Folder: ${WORKSPACE}"
+      }
+    }
+    stage('Install packages') {
+      steps {
+        sh "git pull origin ${BRANCH}"
+      }
+    }
+    stage('Install Front-End Packages') {
+      steps {
+        dir("${WORKSPACE}/react-ui") {
+          echo "Install react UI packages"
+          sh "npm install"
+        }
+      }
+    }
+    stage('Run linting') {
+      steps {
+        dir("${WORKSPACE}/react-ui") {
+          echo "npm run lint"
+        }
+      }
+    }
+    stage('Build UI') {
+      steps {
+        dir("${WORKSPACE}/react-ui") {
+          sh "npm run build"
+          sh "serve -s build " 
+        }
+      }
+    }
+    stage('Deploy app to WEB02') {
+      steps {
+        sh "sudo ssh -i ${SSHKEY} ${SSHUSER}@${WEBSERVER} rm -rf /home/${SSHUSER}/reactfront"
+        sh "sudo scp -i ${SSHKEY} -r ${WORKSPACE}/react-ui/build ${SSHUSER}@${WEBSERVER}:/home/${SSHUSER}/reactfront"
+        sh "sudo ssh -i ${SSHKEY} ${SSHUSER}@${WEBSERVER} sudo rm -rf ${WWWROOT}/reactfront"
+        sh "sudo ssh -i ${SSHKEY} ${SSHUSER}@${WEBSERVER} sudo cp -r /home/${SSHUSER}/reactfront ${WWWROOT}/reactfront"
+      }
+    }
+  }
+}
