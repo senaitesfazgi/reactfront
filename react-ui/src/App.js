@@ -10,7 +10,7 @@ function App() {
     <BrowserRouter>
     <div className="container">
       <h3 className="m-3 d-flex justify-content-center">
-       COMIT devops course
+       COMIT Presentation August 4
      </h3>
      <Navigation/>
      <Switch>
