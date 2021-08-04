@@ -30,6 +30,7 @@ pipeline {
         dir("${WORKSPACE}/react-ui") {
           echo "Install react UI packages"
           sh "npm install"
+          sh "npm install -g serve"
         }
       }
     }
